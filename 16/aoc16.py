@@ -17,7 +17,7 @@ def Process_Packet(packet,mode,np,versions):
         version = int(bin_version, 2)
         versions.append(version)
         type = int(bin_type, 2)
-        print("Version/Types:",version,type)
+#        print("Version/Types:",version,type)
     
         if(type == 4):
             literal = []
@@ -39,22 +39,9 @@ def Process_Packet(packet,mode,np,versions):
             val = int(bin_val,2)
             values.append(val)
             num_packets += 1
-            if(mode == 1):
-                if(num_packets == np):
-                    print("Values:",values)
-                    return (i,values)
 
-            # Can't really do this, might have back-to-back packets.
-            # Trailing zeros can be ignored
-    #        while(packet[i] == '0'):
-    #            i += 1  # skip leading zeros
-            # check if it's just trailing zeros, if so, stop and return i
-            if('1' not in packet[i:]):
-                return (i,values)
-
-#        return i
         else:
-            print("Operator")
+#            print("Operator Type:",type)
 
             m = packet[i]
             i += 1
@@ -64,8 +51,6 @@ def Process_Packet(packet,mode,np,versions):
                 num = int(bin_num,2)
                 i += 15
                 (next_i,next_values) = Process_Packet(packet[i:i+num],0,0,versions)
-                i += next_i  
-                num_packets += 1
             else:
                 # next 11bits is a number.
                 bin_num = "".join(packet[i:i+11])
@@ -76,22 +61,49 @@ def Process_Packet(packet,mode,np,versions):
                 # maybe give Process_Packet different modes?
                 # Implemented.
                 (next_i,next_values) = Process_Packet(packet[i:],1,num,versions)
-                i += next_i
-                num_packets += 1
-            if(mode == 1):
-                if(num_packets == np):
-                    return (i,values)
-            if('1' not in packet[i:]):
-                return (i,values)
+            i += next_i
+            num_packets += 1
 
-testcase = True
+            # TODO, process operator here?
+            if(type == 0):
+                values.append(sum(next_values))
+            elif(type == 1):
+                tot = 1
+                for v in next_values:
+                    tot *= v
+                values.append(tot)
+            elif(type == 2):
+                values.append(min(next_values))
+            elif(type == 3):
+                values.append(max(next_values))
+            elif(type == 5):
+                if(next_values[0] > next_values[1]):
+                    values.append(1)
+                else:
+                    values.append(0)
+            elif(type == 6):
+                if(next_values[0] < next_values[1]):
+                    values.append(1)
+                else:
+                    values.append(0)
+            elif(type == 7):
+                if(next_values[0] == next_values[1]):
+                    values.append(1)
+                else:
+                    values.append(0)
+
+        if(mode == 1):
+            if(num_packets == np):
+                return (i,values)
+        if('1' not in packet[i:]):
+            return (i,values)
+
+
+testcase = False
 if testcase:
     file = "test2.txt"
 else:
     file = "input.txt"
-
-def Do_It(lines):
-    return "Done"
 
 with open(file, "r") as stuff:
     lines = stuff.read().splitlines()
