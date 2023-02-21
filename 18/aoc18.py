@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 
+import math
+
 testcase = True
 if testcase:
-    file = "test2.txt"
+    file = "test.txt"
 else:
     file = "input.txt"
 
@@ -42,8 +44,11 @@ class Number:
     def print(self):
         number = self.p_recurse(self)
         print("".join(number))
-        # also return
+    
+    def return_print(self):
+        number = self.p_recurse(self)
         return "".join(number)
+
         
 def Max_Depth(line):
     '''
@@ -127,32 +132,80 @@ def Add_Numbers(one,two):
     return new_num
 
 def Find_Left_Pair(number,depth):
-        while(depth < 5):
-            next = None
-            if(number.left != None):
-                next = number.left
-            elif(number.right != None):
-                next = number.right
+        '''
+        Returns result_number and a bool for whether it was the left branch or right branch
+        '''
+#        print("Finding left for:")
+#        number.print()
+        # could we do this differently?  The depth only matters as a test to see if we've found the right
+        # bottom pair (as defined by not having a .left or .right)
 
-            if(next != None):
-                depth += 1
-                res_num = Find_Left_Pair(next,depth)
-                if(res_num != None):
-                    return res_num
+        if(depth == 5 and number.left == None and number.right == None):
+            return (number,None)  # yay!
+#        elif(number.left == None and number.right == None):
+#            print("go back")
+#            return None
 
-            ## need to go all the way left and have found nothing
-            # before we come back and do right
+        depth += 1
+        if(number.left != None):  
+            (res_num,is_left) = Find_Left_Pair(number.left,depth)
+            if(res_num != None):
+                if(is_left != None):
+                    return (res_num,is_left)
+                else:
+                    return (res_num,True)
+#            else:
+#                return None
+        if(number.right != None):
+            (res_num,is_left) = Find_Left_Pair(number.right,depth)
+            if(res_num != None):
+                if(is_left != None):
+                    return (res_num,is_left)
+                else:
+                    return (res_num,False)
+            else:
+                return (None,None)            
 
-#            elif(number.right != None):
-#                next = number.right
-#                depth += 1
-#                print("try right")
-            elif(number.left == None and number.right == None):
-                # didn't find one down this path.
-                return None
-            
-        print("At Depth?")
-        return number
+#        exit()
+        return (None,None)
+
+def Find_Left_Split(number):
+        
+#        print("Finding left for:")
+#        number.print()
+        # could we do this differently?  The depth only matters as a test to see if we've found the right
+        # bottom pair (as defined by not having a .left or .right)
+
+        if(number.left != None):
+            rnumber = Find_Left_Split(number.left)
+            if(rnumber != None):
+                number.left = rnumber
+                return number
+        elif(number.lval > 9):
+#            print("Split it!", number.lval)
+            nlval = int(number.lval / 2)
+            nrval = math.ceil(number.lval / 2)
+            new = Number(number,nlval,nrval)
+            number.left = new
+            number.lval = None
+#            number.print()
+            return number
+        
+        if(number.right != None):
+            rnumber = Find_Left_Split(number.right)
+            if(rnumber != None):
+                number.right = rnumber
+                return number
+        elif(number.rval > 9):
+#            print("Split it!",number.rval)
+            nlval = int(number.rval / 2)
+            nrval = math.ceil(number.rval / 2)
+            new = Number(number,nlval,nrval)
+            number.right = new
+            number.rval = None
+            return number
+
+        return None
 
                 
 def Reduce(number):
@@ -161,7 +214,7 @@ def Reduce(number):
     while(reduce == 1):
         reduce = 0
         explode = 0
-        md = Max_Depth(result.print())
+        md = Max_Depth(number.return_print())
         if(md > 5):
             print("Whut?")
             exit()
@@ -173,9 +226,9 @@ def Reduce(number):
             # Explode
             # Find leftmost pair that needs exploding
             depth = 1
-            lpair = Find_Left_Pair(number,depth)
-            lpair.print()
-#            lpair.print_vals()
+            (lpair,is_left) = Find_Left_Pair(number,depth)
+#            lpair.print()
+
     #       Add_to_Left
             n = lpair
             while(n.parent != None):
@@ -208,19 +261,40 @@ def Reduce(number):
                         break
                 n = n.parent
 
-    #       Replace w/ 0
-            lpair.parent.left = None
-            lpair.parent.lval = 0
-
-        # Did our main number pick up all these changes?
-        number.print()
-
+    #       Replace w/ 0   ##### TODO... this might be a change to 'right'
+#            print("is_left",is_left)
+            if(is_left):
+                lpair.parent.left = None    
+                lpair.parent.lval = 0
+            else:
+                lpair.parent.right = None    
+                lpair.parent.rval = 0
 
         if(explode == 0):
             # check to split big numbers
-            print("Split if big")
-            reduce = 0 # temp
+            # if there's a big number, split it and set reduce = 1
+            rnumber = Find_Left_Split(number)
+#            print("splitting")
+            if(rnumber != None):
+                number = rnumber
+                reduce = 1
 
+    return number
+
+def Magnitude(number):
+    total = 0
+
+    if(number.left != None):
+        total += 3 * Magnitude(number.left)
+    else:
+        total += 3 * number.lval
+    
+    if(number.right != None):
+        total += 2 * Magnitude(number.right)
+    else:
+        total += 2 * number.rval
+
+    return total
 
 
 with open(file, "r") as stuff:
@@ -229,18 +303,23 @@ with open(file, "r") as stuff:
     numbers = []
     numbers = Read_Numbers(lines)
 
-#    for num in numbers:
-#        num.print()
 
+    cur_number = numbers[0]
 
-    result = Add_Numbers(numbers[0],numbers[1])
+    for i in range(1,len(numbers)):
+        cur_number = Add_Numbers(cur_number,numbers[i])
 #    result.print()
 
-    # Could make a new Max_Depth that works on a Number object
-    md = Max_Depth(result.print())
-    if(md > 4):
-        reduced = Reduce(result)
-        print("Reduced")
+        # Could make a new Max_Depth that works on a Number object
+        md = Max_Depth(cur_number.return_print())
+        if(md > 4):
+            cur_number = Reduce(cur_number)
+#            print("Reduced")
+#            cur_number.print()
+    
+    res = Magnitude(cur_number)
+
+    print("Magnitude:",res)
 
 
 
