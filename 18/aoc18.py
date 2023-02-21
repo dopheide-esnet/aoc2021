@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
 import math
+import copy
 
-testcase = True
+testcase = False
 if testcase:
     file = "test.txt"
 else:
@@ -303,24 +304,35 @@ with open(file, "r") as stuff:
     numbers = []
     numbers = Read_Numbers(lines)
 
+    # Part 1
+    p1 = False
+    if(p1):
+        cur_number = numbers[0]
+        for i in range(1,len(numbers)):
+            cur_number = Add_Numbers(cur_number,numbers[i])
 
-    cur_number = numbers[0]
+            # Could make a new Max_Depth that works on a Number object
+            md = Max_Depth(cur_number.return_print())
+            if(md > 4):
+                cur_number = Reduce(cur_number)
+        
+        res = Magnitude(cur_number)
+        print("All Magnitude:",res)
 
-    for i in range(1,len(numbers)):
-        cur_number = Add_Numbers(cur_number,numbers[i])
-#    result.print()
-
-        # Could make a new Max_Depth that works on a Number object
-        md = Max_Depth(cur_number.return_print())
-        if(md > 4):
-            cur_number = Reduce(cur_number)
-#            print("Reduced")
-#            cur_number.print()
-    
-    res = Magnitude(cur_number)
-
-    print("Magnitude:",res)
-
-
+    # Part 2
+    # We find out that my functions modify the numbers inside the numbers list (oops)
+    max = 0
+    for i in range(len(numbers)):
+        for j in range(len(numbers)):
+            if(i != j):
+                number = Add_Numbers(copy.deepcopy(numbers[i]),copy.deepcopy(numbers[j]))
+                md = Max_Depth(number.return_print())
+                if(md > 4):
+                    number = Reduce(number) 
+                res = Magnitude(number)
+                if(res > max):
+                    max = res
+    print("Max Magnitude:",max)
+    print("Test should be 3993")
 
 
