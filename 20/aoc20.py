@@ -61,8 +61,7 @@ def filter_image(map,bounds,filter,mode):
                 new_map[y][x] = '.'
             else:
                 new_map[y][x] = mode
-
-    print_map2(new_map)
+#    print_map2(new_map)
 
     for y in range(oy,my+1):
         for x in range(ox,mx+1):
@@ -95,34 +94,6 @@ def count_lit_pixels(map):
                 count += 1
     return count
 
-def filter2(map,filter,o,m,mode):
-    new_map = dict()
-    o -= 1
-    m += 1
-    
-    for y in range(o,m+1):
-        if(y not in new_map):
-            new_map[y] = dict()
-        for x in range(o,m+1):
-            binary_string = ''
-
-            for my in range(y-1,y+2):
-                if(my not in map):
-                    binary_string += mode * 3
-                else:  
-                    for mx in range(x-1,x+2):
-                        if(mx not in map[my]):
-                            binary_string += mode
-                        elif(map[my][mx] == '.'):
-                            binary_string += '0'
-                        else:
-                            binary_string += '1'
-
-#            print(y,x)
-#            print(binary_string)
-            new_map[y][x] = filter[int(binary_string,2)]
-    return new_map
-
 def print_map2(map):
     for y in map:
         for x in map[y]:
@@ -133,54 +104,34 @@ with open(file, "r") as stuff:
     lines = stuff.read().splitlines()
     (filter,map,my,mx) = Prep_Input(lines)
 
-    if(0):
-        # my and mx should always be equal
-        o = 0
-        mode = '0'  # the infinite border is in light or dark mode
-        map = filter2(map,filter,o,mx,mode)
-        mode = '1'
-        print_map2(map)
-
-        map = filter2(map,filter,o-1,mx+1,mode)
-        mode = '0'
-        print_map2(map)
-
-        print("Oooooohh... the infinite border doesn't remain dark if filter[0] == #")
-
-        res = count_lit_pixels(map)
-        print("Result",res)
-
     ''' First Try '''
     mode = '.'
     bounds = (0,0,my,mx) # y,x,my,mx
     bounds = add_border(map,bounds,mode)
     bounds = add_border(map,bounds,mode)
 
-    new_bounds = add_border(map,bounds,mode)
+#    new_bounds = add_border(map,bounds,mode)
     # we need to start with a 'triple thick' border to make it easy to move around later.
 
-    print_map(map,new_bounds)
+    for i in range(50):
+#        print("Adding border")
+        new_bounds = add_border(map,bounds,mode)
 
-    map = filter_image(map,bounds,filter,mode) # use original bounds
-    bounds = new_bounds
-    print()
-    print_map(map,bounds)
-    print()
+        map = filter_image(map,bounds,filter,mode) # use original bounds
+        bounds = new_bounds
+    #    print()
+    #    print_map(map,bounds)
+    #    print()
 
-    if((mode == '.' and filter[0] == '#')):
-        mode = '#'
-    elif(mode == '#' and filter[511] == '.'):
-        mode = '.'
 
-    print("Adding border")
+        if((mode == '.' and filter[0] == '#')):
+            mode = '#'
+        elif(mode == '#' and filter[511] == '.'):
+            mode = '.'
 
-    new_bounds = add_border(map,bounds,mode)
+#    map = filter_image(map,bounds,filter,mode) # use original bounds
+#    bounds = new_bounds
 
-#    print_map2(map)
-
-    map = filter_image(map,bounds,filter,mode) # use original bounds
-    (oy,ox,my,mx) = bounds
-    bounds = (oy-1,ox-1,my+1,mx+1)
     print_map(map,bounds)
 
     res = count_lit_pixels(map)
